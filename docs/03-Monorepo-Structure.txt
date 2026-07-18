@@ -1,0 +1,44 @@
+```text
+# 03-Monorepo-Structure.txt
+
+plataforma-delivery/
+├── package.json (Workspaces / Turborepo)
+├── turbo.json
+├── apps/
+│   ├── api-backend/               # NestJS (Core API & WebSockets)
+│   │   ├── src/
+│   │   │   ├── modules/           # Dominios (auth, catalog, orders, logistics, billing)
+│   │   │   ├── common/            # Filtros, Guards, Decorators, Interceptors
+│   │   │   └── main.ts
+│   │   ├── Dockerfile
+│   │   └── package.json
+│   ├── web-panel/                 # Next.js App Router (Admin & Comercios)
+│   │   ├── src/
+│   │   │   ├── app/
+│   │   │   │   ├── (auth)/        # Login compartida
+│   │   │   │   ├── (admin)/       # Dashboard SuperAdmin
+│   │   │   │   └── (commerce)/    # Dashboard Tenants
+│   │   │   ├── components/
+│   │   │   ├── hooks/
+│   │   │   └── middleware.ts      # Protección perimetral de rutas
+│   │   └── package.json
+│   ├── mobile-client/             # React Native + Expo (App Usuarios)
+│   │   ├── app/                   # Expo Router
+│   │   ├── src/
+│   │   │   ├── store/             # Zustand (Cart, Auth)
+│   │   │   └── components/
+│   │   └── package.json
+│   └── mobile-driver/             # React Native + Expo (App Repartidores)
+│       ├── app/
+│       ├── src/
+│       │   ├── background/        # Tareas en segundo plano (Expo Task Manager)
+│       │   └── store/             # Zustand (Driver Status)
+│       └── package.json
+├── packages/                      # Código compartido
+│   ├── database/                  # Prisma
+│   │   ├── prisma/
+│   │   │   └── schema.prisma      # Fuente ÚNICA de verdad de BD
+│   │   └── package.json
+│   ├── eslint-config/
+│   └── typescript-config/
+└── docker-compose.yml             # Postgres+PostGIS, Redis
