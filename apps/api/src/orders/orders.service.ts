@@ -5,12 +5,14 @@ import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { ProductsService } from '../products/products.service';
 import { OrderStatus } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly productsService: ProductsService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async create(clientId: string, createOrderDto: CreateOrderDto) {
@@ -20,14 +22,20 @@ export class OrdersService {
       throw new BadRequestException('Order must contain at least one item');
     }
 
-    // 1. Check if Commerce exists and is open
-    const commerce = await this.prisma.commerce.findUnique({
-      where: { id: commerceId },
-    });
-
-    if (!commerce) {
+    // 1. Check if Commerce exists and is open (using queryRaw to get PostGIS coordinates)
+    const commerceData = await this.prisma.$queryRaw`
+      SELECT id, name, is_active as "isActive", is_open as "isOpen",
+             ST_X(location::geometry) as lng, 
+             ST_Y(location::geometry) as lat
+      FROM commerces
+      WHERE id = ${commerceId}::uuid
+    `;
+    
+    if (!commerceData || !commerceData[0]) {
       throw new NotFoundException('Commerce not found');
     }
+
+    const commerce = commerceData[0];
 
     if (!commerce.isActive || !commerce.isOpen) {
       throw new BadRequestException('Commerce is closed or inactive');
@@ -83,6 +91,13 @@ export class OrdersService {
         include: {
           items: true,
         },
+      });
+
+      // Emit event
+      this.eventEmitter.emit('order.created', {
+        order,
+        commerceName: commerce.name,
+        commerceLocation: commerce.lat && commerce.lng ? { lat: commerce.lat, lng: commerce.lng } : undefined
       });
 
       return order;
