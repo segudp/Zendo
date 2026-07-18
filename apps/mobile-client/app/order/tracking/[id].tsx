@@ -45,8 +45,11 @@ export default function OrderTrackingScreen() {
         driverLocation.timing({
           latitude: data.lat,
           longitude: data.lng,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
           duration: 1000,
-          useNativeDriver: false
+          useNativeDriver: false,
+          toValue: 1, // Satisfy TS, value is handled by AnimatedRegion
         }).start();
       } else {
         setDriverLocation(new AnimatedRegion({
@@ -87,7 +90,7 @@ export default function OrderTrackingScreen() {
       <View className="flex-1">
         <MapView
           ref={mapRef}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
           initialRegion={{
             latitude: -34.6037, // TODO: Usar ubicación del comercio o cliente
             longitude: -58.3816,
