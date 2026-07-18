@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { UserPayload } from '../common/interfaces/user-payload.interface';
 
 @Controller('products')
 export class ProductsController {
@@ -14,7 +15,7 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('COMMERCE_OWNER')
   @Post()
-  create(@CurrentUser() user: any, @Body() createProductDto: CreateProductDto) {
+  create(@CurrentUser() user: UserPayload, @Body() createProductDto: CreateProductDto) {
     const commerceId = user.commerce?.id;
     if (!commerceId) throw new ForbiddenException('User does not have an associated commerce');
     return this.productsService.create(commerceId, createProductDto);
@@ -36,7 +37,7 @@ export class ProductsController {
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserPayload,
     @Body() updateProductDto: UpdateProductDto,
   ) {
     const commerceId = user.commerce?.id;
@@ -47,7 +48,7 @@ export class ProductsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('COMMERCE_OWNER')
   @Delete(':id')
-  remove(@Param('id') id: string, @CurrentUser() user: any) {
+  remove(@Param('id') id: string, @CurrentUser() user: UserPayload) {
     const commerceId = user.commerce?.id;
     if (!commerceId) throw new ForbiddenException('User does not have an associated commerce');
     return this.productsService.remove(id, commerceId);

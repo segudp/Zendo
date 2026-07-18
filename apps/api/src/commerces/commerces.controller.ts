@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { UserPayload } from '../common/interfaces/user-payload.interface';
 
 @Controller('commerces')
 export class CommercesController {
@@ -14,7 +15,7 @@ export class CommercesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('COMMERCE_OWNER')
   @Post()
-  create(@CurrentUser() user: any, @Body() createCommerceDto: CreateCommerceDto) {
+  create(@CurrentUser() user: UserPayload, @Body() createCommerceDto: CreateCommerceDto) {
     return this.commercesService.create(user.id, createCommerceDto);
   }
 
@@ -26,7 +27,7 @@ export class CommercesController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('COMMERCE_OWNER')
   @Get('my-commerce')
-  findMyCommerce(@CurrentUser() user: any) {
+  findMyCommerce(@CurrentUser() user: UserPayload) {
     return this.commercesService.findByOwner(user.id);
   }
 
@@ -40,7 +41,7 @@ export class CommercesController {
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserPayload,
     @Body() updateCommerceDto: UpdateCommerceDto,
   ) {
     return this.commercesService.update(id, user.id, updateCommerceDto);

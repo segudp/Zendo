@@ -10,12 +10,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     
     let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message: any = 'Internal server error';
-
+    let message: string = 'Internal server error';
     if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      message = typeof exceptionResponse === 'string' ? exceptionResponse : (exceptionResponse as any).message || 'Http exception';
+      message = typeof exceptionResponse === 'string' ? exceptionResponse : (exceptionResponse as { message: string | string[] }).message?.toString() || 'Http exception';
     } else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       // Manejo de errores específicos de Prisma
       switch (exception.code) {

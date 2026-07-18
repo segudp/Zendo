@@ -23,7 +23,16 @@ export class OrdersService {
     }
 
     // 1. Check if Commerce exists and is open (using queryRaw to get PostGIS coordinates)
-    const commerceData = await this.prisma.$queryRaw`
+    const commerceData = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        name: string;
+        isActive: boolean;
+        isOpen: boolean;
+        lng: number;
+        lat: number;
+      }>
+    >`
       SELECT id, name, is_active as "isActive", is_open as "isOpen",
              ST_X(location::geometry) as lng, 
              ST_Y(location::geometry) as lat

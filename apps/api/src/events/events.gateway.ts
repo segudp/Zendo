@@ -13,6 +13,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { LogisticsService } from '../logistics/logistics.service';
 import { DeliveryService } from '../delivery/delivery.service';
 import { Logger } from '@nestjs/common';
+import { Order } from '@prisma/client';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -105,7 +106,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @OnEvent('order.created')
-  async handleOrderCreated(payload: { order: any; commerceLocation?: { lat: number; lng: number }; commerceName: string }) {
+  async handleOrderCreated(payload: { order: Order; commerceLocation?: { lat: number; lng: number }; commerceName: string }) {
     const { order, commerceLocation, commerceName } = payload;
     
     // 1. Emitir al comercio

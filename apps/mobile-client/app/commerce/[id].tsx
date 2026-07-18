@@ -4,10 +4,17 @@ import { useEffect, useState } from 'react';
 import { apiClient } from '../../src/api/client';
 import { useCartStore } from '../../src/store/useCartStore';
 
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: string | number;
+}
+
 export default function CommerceDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { addItem, items } = useCartStore();
 
@@ -25,7 +32,7 @@ export default function CommerceDetailScreen() {
     fetchProducts();
   }, [id]);
 
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: Product) => {
     addItem(id as string, {
       productId: product.id,
       name: product.name,
@@ -33,7 +40,7 @@ export default function CommerceDetailScreen() {
     });
   };
 
-  const renderProduct = ({ item }: { item: any }) => (
+  const renderProduct = ({ item }: { item: Product }) => (
     <View className="bg-surface p-4 border-b border-gray-100 flex-row justify-between items-center">
       <View className="flex-1 mr-4">
         <Text className="text-textPrimary font-bold text-lg mb-1">{item.name}</Text>

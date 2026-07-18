@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { UserPayload } from '../common/interfaces/user-payload.interface';
 
 @Controller('orders')
 export class OrdersController {
@@ -14,13 +15,13 @@ export class OrdersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('CLIENT')
   @Post()
-  create(@CurrentUser() user: any, @Body() createOrderDto: CreateOrderDto) {
+  create(@CurrentUser() user: UserPayload, @Body() createOrderDto: CreateOrderDto) {
     return this.ordersService.create(user.id, createOrderDto);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(@CurrentUser() user: any) {
+  findAll(@CurrentUser() user: UserPayload) {
     if (user.role === 'CLIENT') {
       return this.ordersService.findAllForClient(user.id);
     } else if (user.role === 'COMMERCE_OWNER') {
@@ -36,7 +37,7 @@ export class OrdersController {
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: UserPayload,
     @Body() updateOrderStatusDto: UpdateOrderStatusDto,
   ) {
     const commerceId = user.commerce?.id;
