@@ -1,0 +1,12 @@
+{
+  "name": "zendo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Zendo monorepo root. Cada app en apps/* se instala y corre por separado (ver README.md); este package.json existe sólo para darle al tooling (Prisma CLI, etc.) una raíz de proyecto estable.",
+  "devDependencies": {
+    "prisma": "^6.19.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
+  }
+}

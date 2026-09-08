@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { jwtDecode } from "jwt-decode"; // I should use a simple base64 decode if jwt-decode isn't installed. I'll write a simple decoder.
 
 interface DecodedToken {
   role: string;
@@ -19,7 +18,7 @@ function parseJwt(token: string): DecodedToken | null {
         .join("")
     );
     return JSON.parse(jsonPayload);
-  } catch (e) {
+  } catch {
     return null;
   }
 }

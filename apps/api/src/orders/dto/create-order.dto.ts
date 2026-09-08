@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, ValidateNested, IsNumber, Min, IsOptional } from 'class-validator';
 
 export class OrderItemDto {
   @IsString()
@@ -9,6 +9,14 @@ export class OrderItemDto {
   @IsNumber()
   @Min(1)
   quantity: number;
+}
+
+export class DropoffLocationDto {
+  @IsNumber()
+  lat: number;
+
+  @IsNumber()
+  lng: number;
 }
 
 export class CreateOrderDto {
@@ -24,4 +32,9 @@ export class CreateOrderDto {
   @IsString()
   @IsNotEmpty()
   dropoffAddress: string;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => DropoffLocationDto)
+  dropoffLocation?: DropoffLocationDto;
 }

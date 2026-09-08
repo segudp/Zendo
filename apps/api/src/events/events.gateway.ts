@@ -13,7 +13,7 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { LogisticsService } from '../logistics/logistics.service';
 import { DeliveryService } from '../delivery/delivery.service';
 import { Logger } from '@nestjs/common';
-import { Order } from '@prisma/client';
+import { Order, OrderStatus } from '@prisma/client';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -33,8 +33,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (!token) throw new Error('No token provided');
 
       const payload = this.jwtService.verify(token);
-      client.data.user = payload; 
-      
+      client.data.user = payload;
+
       const role = payload.role;
       const userId = payload.sub || payload.userId || payload.id;
 
@@ -53,7 +53,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
           client.join(`order_${orderId}`);
         }
       }
-      
+
       this.logger.log(`Client connected: ${client.id} (User: ${userId}, Role: ${role})`);
     } catch (error) {
       this.logger.error(`Connection failed: ${error.message}`);
@@ -83,21 +83,41 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     return null;
   }
 
-  @SubscribeMessage('update_location')
+  // Permite a un cliente unirse/salir manualmente a la sala de un pedido puntual
+  // (usado por la app de clientes al entrar/salir de la pantalla de tracking).
+  @SubscribeMessage('joinRoom')
+  handleJoinRoom(@ConnectedSocket() client: Socket, @MessageBody() room: string) {
+    if (typeof room === 'string' && room.startsWith('order_')) {
+      client.join(room);
+    }
+  }
+
+  @SubscribeMessage('leaveRoom')
+  handleLeaveRoom(@ConnectedSocket() client: Socket, @MessageBody() room: string) {
+    if (typeof room === 'string') {
+      client.leave(room);
+    }
+  }
+
+  @SubscribeMessage('driver.update_location')
   async handleUpdateLocation(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { orderId?: string; lat: number; lng: number }
+    @MessageBody() data: { orderId?: string; lat: number; lng: number; heading?: number; speed?: number }
   ) {
     try {
       const user = client.data.user;
       if (!user || user.role !== 'DRIVER') return;
-      
+
       const userId = user.sub || user.userId || user.id;
-      
+
       await this.deliveryService.updateDriverLocation(userId, data.lat, data.lng);
-      
+
       if (data.orderId) {
-        this.server.to(`order_${data.orderId}`).emit('driver_location', { lat: data.lat, lng: data.lng });
+        this.server.to(`order_${data.orderId}`).emit('driver.location.updated', {
+          lat: data.lat,
+          lng: data.lng,
+          bearing: data.heading,
+        });
       }
     } catch (error) {
       this.logger.error(`Error updating location: ${error.message}`);
@@ -108,29 +128,39 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @OnEvent('order.created')
   async handleOrderCreated(payload: { order: Order; commerceLocation?: { lat: number; lng: number }; commerceName: string }) {
     const { order, commerceLocation, commerceName } = payload;
-    
+
     // 1. Emitir al comercio
-    this.server.to(`commerce_${order.commerceId}`).emit('new_order', { orderId: order.id });
-    
+    this.server.to(`commerce_${order.commerceId}`).emit('new.order.received', { orderData: order });
+
     // 2. Broadcastear a los drivers cercanos (Hito 1 y 3)
     if (commerceLocation) {
       try {
         const drivers = await this.logisticsService.findNearbyDrivers(commerceLocation.lat, commerceLocation.lng, 3);
-        
+
         for (const driver of drivers) {
            const offerPayload = {
               orderId: order.id,
               commerceName: commerceName,
-              pickupLocation: commerceLocation,
+              pickup: commerceLocation,
+              dropoff: order.dropoffAddress,
               dropoffAddress: order.dropoffAddress,
-              deliveryFee: order.deliveryFee,
-              distanceToCommerce: driver.distance // metros
+              fee: Number(order.deliveryFee),
+              deliveryFee: Number(order.deliveryFee),
+              distance: driver.distance, // metros
            };
-           this.server.to(`driver_${driver.userId}`).emit('order_offer', offerPayload);
+           this.server.to(`driver_${driver.userId}`).emit('order.offer', offerPayload);
         }
       } catch(e) {
         this.logger.error(`Error broadcasting order offer: ${e.message}`);
       }
     }
+  }
+
+  // Emitido por OrdersService cuando cambia el estado de un pedido (updateStatus / claim)
+  @OnEvent('order.status.changed')
+  handleOrderStatusChanged(payload: { orderId: string; commerceId: string; newStatus: OrderStatus }) {
+    const eventPayload = { orderId: payload.orderId, newStatus: payload.newStatus };
+    this.server.to(`order_${payload.orderId}`).emit('order.status.updated', eventPayload);
+    this.server.to(`commerce_${payload.commerceId}`).emit('order.status.updated', eventPayload);
   }
 }

@@ -19,7 +19,9 @@ export interface User {
   phone: string | null;
   role: Role;
   isActive: boolean;
-  commerceId?: string | null;
+  // El backend expone el comercio propio (si el usuario es COMMERCE_OWNER) como objeto anidado,
+  // no como un id plano, para que el front nunca necesite volver a pedirlo.
+  commerce?: { id: string; name: string } | null;
 }
 
 export interface Commerce {

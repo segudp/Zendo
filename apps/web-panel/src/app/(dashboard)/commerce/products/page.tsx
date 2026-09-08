@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Product } from "@/types/api";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Table, TableHeader, TableRow, TableHead, TableCell } from "@/components/ui/Table";
@@ -11,18 +11,17 @@ import { Input } from "@/components/ui/Input";
 
 export default function ProductsPage() {
   const token = useAuthStore((state) => state.token);
-  const queryClient = useQueryClient();
+  const commerceId = useAuthStore((state) => state.user?.commerce?.id);
   const [isModalOpen, setModalOpen] = useState(false);
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
 
   // Fetch Products
   const { data: products = [], isLoading } = useQuery<Product[]>({
-    queryKey: ["products"],
+    queryKey: ["products", commerceId],
+    enabled: !!commerceId,
     queryFn: async () => {
-      // Usamos el ID del comercio (aunque en el backend real esto podría sacarse del token)
-      // Como estamos mockeando o asumiendo el contrato:
-      const res = await fetch(`${baseUrl}/catalog/commerces/me/products`, {
+      const res = await fetch(`${baseUrl}/catalog/commerces/${commerceId}/products`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Error fetching products");

@@ -8,16 +8,17 @@ export class DeliveryService {
   async updateDriverLocation(userId: string, lat: number, lng: number) {
     // Utilizamos $executeRaw ya que Prisma no soporta actualizaciones con PostGIS de forma nativa
     await this.prisma.$executeRaw`
-      UPDATE drivers 
+      UPDATE drivers
       SET current_location = ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)
       WHERE user_id = ${userId}::uuid;
     `;
+    return { lat, lng };
   }
 
   async setOnlineStatus(userId: string, isOnline: boolean) {
-    await this.prisma.driver.update({
+    return this.prisma.driver.update({
       where: { userId },
-      data: { isOnline }
+      data: { isOnline },
     });
   }
 }

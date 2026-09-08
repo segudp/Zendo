@@ -3,7 +3,7 @@ import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { UserPayload } from '../common/interfaces/user-payload.interface';
@@ -34,6 +34,12 @@ export class OrdersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findOne(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+    return this.ordersService.findOne(id, user);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Patch(':id/status')
   updateStatus(
     @Param('id') id: string,
@@ -42,5 +48,12 @@ export class OrdersController {
   ) {
     const commerceId = user.commerce?.id;
     return this.ordersService.updateStatus(id, updateOrderStatusDto, user.role, commerceId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('DRIVER')
+  @Patch(':id/claim')
+  claim(@Param('id') id: string, @CurrentUser() user: UserPayload) {
+    return this.ordersService.claim(id, user.id);
   }
 }

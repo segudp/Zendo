@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
 
 interface TableProps {
   children: ReactNode;
@@ -22,14 +22,26 @@ export function TableHeader({ children }: TableProps) {
   );
 }
 
-export function TableRow({ children }: TableProps) {
-  return <tr className="bg-white border-b hover:bg-gray-50 transition-colors">{children}</tr>;
+export function TableRow({ children, className, ...props }: HTMLAttributes<HTMLTableRowElement>) {
+  return (
+    <tr className={`bg-white border-b hover:bg-gray-50 transition-colors ${className ?? ""}`} {...props}>
+      {children}
+    </tr>
+  );
 }
 
-export function TableHead({ children }: TableProps) {
-  return <th className="px-6 py-4 font-medium text-gray-900">{children}</th>;
+export function TableHead({ children, className, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
+  return (
+    <th className={`px-6 py-4 font-medium text-gray-900 ${className ?? ""}`} {...props}>
+      {children}
+    </th>
+  );
 }
 
-export function TableCell({ children }: TableProps) {
-  return <td className="px-6 py-4">{children}</td>;
+export function TableCell({ children, className, ...props }: TdHTMLAttributes<HTMLTableCellElement>) {
+  return (
+    <td className={`px-6 py-4 ${className ?? ""}`} {...props}>
+      {children}
+    </td>
+  );
 }

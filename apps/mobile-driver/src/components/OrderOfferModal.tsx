@@ -1,6 +1,5 @@
 import { View, Text, TouchableOpacity, Alert, StyleSheet, Modal } from 'react-native';
-import { useEffect, useState } from 'react';
-import { Audio } from 'expo-av';
+import { useState } from 'react';
 import { apiClient } from '../api/client';
 import { useRouter } from 'expo-router';
 
@@ -16,25 +15,12 @@ interface OfferProps {
   onClose: () => void;
 }
 
+// TODO: sonido de alerta al recibir una oferta. Pendiente de definir la librería
+// de audio a usar (expo-av está deprecado en SDKs recientes; ver expo-audio) y
+// de agregar el asset en apps/mobile-driver/assets/alert.mp3.
 export function OrderOfferModal({ offer, onClose }: OfferProps) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const [sound, setSound] = useState<Audio.Sound>();
-
-  useEffect(() => {
-    async function playSound() {
-      // Fallback a un beep del sistema nativo simulado o requerir un asset local
-      // Aquí dejamos la lógica preparada para assets/alert.mp3
-      // const { sound } = await Audio.Sound.createAsync(require('../../assets/alert.mp3'));
-      // setSound(sound);
-      // await sound.playAsync();
-    }
-    playSound();
-
-    return () => {
-      if (sound) sound.unloadAsync();
-    };
-  }, []);
 
   const acceptOrder = async () => {
     setLoading(true);

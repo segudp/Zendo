@@ -13,6 +13,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Guard de hidratación: el estado de auth persiste en localStorage y sólo existe
+    // en el cliente, así que la primera pasada de render en el servidor no lo conoce.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     if (!isAuth) {
       router.push("/login");

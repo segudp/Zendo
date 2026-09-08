@@ -16,10 +16,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly configService: ConfigService,
     private readonly usersService: UsersService,
   ) {
+    const secret = configService.get<string>('JWT_SECRET');
+    if (!secret) {
+      throw new Error('JWT_SECRET is not defined (check your .env)');
+    }
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey: secret,
     });
   }
 
@@ -28,6 +32,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user || !user.isActive) {
       throw new UnauthorizedException('User is not active or does not exist');
     }
-    return user;
+    // No exponer el hash de la contraseña en req.user (se serializa en /auth/me, etc.)
+    const { passwordHash, ...safeUser } = user;
+    return safeUser;
   }
 }

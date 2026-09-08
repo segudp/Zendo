@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -10,7 +11,27 @@ export class UsersService {
       where: { id },
       include: {
         commerce: true,
-      }
+      },
     });
+  }
+
+  async findByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      include: {
+        commerce: true,
+      },
+    });
+  }
+
+  async create(data: {
+    email: string;
+    passwordHash: string;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    role?: Role;
+  }) {
+    return this.prisma.user.create({ data });
   }
 }

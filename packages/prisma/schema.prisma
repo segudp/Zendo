@@ -6,12 +6,19 @@
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
+  // El schema vive en packages/prisma pero el único consumidor hoy es apps/api.
+  // Sin este `output` explícito, `prisma generate` resuelve la ubicación del
+  // cliente subiendo desde la carpeta del schema (nunca entra a apps/api, que
+  // es un directorio hermano) y termina generándolo en la raíz del repo.
+  output = "../../apps/api/node_modules/.prisma/client"
 }
 
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  extensions = [postgis(version: "3.3")] // Requiere habilitar la extensión en PG
+  // Sin pin de versión: la imagen postgis/postgis:15-3.3 instala 3.3.4 (no existe
+  // un paquete "3.3" exacto), y fijar un patch exacto rompe con otras imágenes/versiones.
+  extensions = [postgis]
 }
 
 // ==========================================

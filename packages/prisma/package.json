@@ -1,0 +1,6 @@
+{
+  "name": "@zendo/prisma",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Schema de base de datos de Zendo (fuente única de verdad). Consumido hoy por apps/api."
+}

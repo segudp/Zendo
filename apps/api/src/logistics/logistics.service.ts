@@ -35,4 +35,46 @@ export class LogisticsService {
     `;
     return drivers as Array<{ id: string, userId: string, lng: number, lat: number, distance: number }>;
   }
+
+  // Viaje activo del repartidor logueado (rumbo al comercio o al cliente)
+  async findActiveOrderForDriver(driverUserId: string) {
+    const rows = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        status: string;
+        dropoffAddress: string;
+        dropoffLat: number | null;
+        dropoffLng: number | null;
+        commerceAddress: string;
+        commerceLat: number | null;
+        commerceLng: number | null;
+      }>
+    >`
+      SELECT o.id, o.status::text as status, o.dropoff_address as "dropoffAddress",
+             ST_Y(o.dropoff_location::geometry) as "dropoffLat",
+             ST_X(o.dropoff_location::geometry) as "dropoffLng",
+             c.address as "commerceAddress",
+             ST_Y(c.location::geometry) as "commerceLat",
+             ST_X(c.location::geometry) as "commerceLng"
+      FROM orders o
+      JOIN order_deliveries od ON od.order_id = o.id
+      JOIN drivers d ON d.id = od.driver_id
+      JOIN commerces c ON c.id = o.commerce_id
+      WHERE d.user_id = ${driverUserId}::uuid
+        AND o.status IN ('DRIVER_ASSIGNED', 'PICKED_UP')
+      LIMIT 1
+    `;
+
+    const row = rows[0];
+    if (!row) return null;
+
+    return {
+      id: row.id,
+      status: row.status,
+      dropoffAddress: row.dropoffAddress,
+      dropoffLocation: row.dropoffLat && row.dropoffLng ? { lat: row.dropoffLat, lng: row.dropoffLng } : null,
+      commerceAddress: row.commerceAddress,
+      commerceLocation: row.commerceLat && row.commerceLng ? { lat: row.commerceLat, lng: row.commerceLng } : null,
+    };
+  }
 }
